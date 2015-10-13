@@ -134,7 +134,12 @@ cv::Point findEyeCenter(cv::Mat face, cv::Rect eye, std::string debugWindow) {
       }
     }
   }
-  imshow(debugWindow,gradientX);
+  
+  /**
+   * HIDING EYES WINDOWS
+   * imshow(debugWindow,gradientX);
+   */
+
   //-- Create a blurred and inverted image for weighting
   cv::Mat weight;
   GaussianBlur( eyeROI, weight, cv::Size( kWeightBlurSize, kWeightBlurSize ), 0, 0 );
@@ -151,7 +156,14 @@ cv::Point findEyeCenter(cv::Mat face, cv::Rect eye, std::string debugWindow) {
   // Note: these loops are reversed from the way the paper does them
   // it evaluates every possible center for each gradient location instead of
   // every possible gradient location for every center.
-  printf("Eye Size: %ix%i\n",outSum.cols,outSum.rows);
+
+  /**
+   * HIDING EYE SIZE
+   *
+   * printf("Eye Size: %ix%i\n",outSum.cols,outSum.rows);
+   *
+   */
+
   for (int y = 0; y < weight.rows; ++y) {
     const double *Xr = gradientX.ptr<double>(y), *Yr = gradientY.ptr<double>(y);
     for (int x = 0; x < weight.cols; ++x) {

@@ -28,4 +28,7 @@ const float kPostProcessThreshold = 0.97;
 // Eye Corner
 const bool kEnableEyeCorner = false;
 
+// Deadline
+const std::clock_t kDeadline = 2;
+
 #endif

@@ -3,6 +3,13 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <iostream>
+/**
+ * TIMER
+ */
+#include <ctime>
+/**
+ */
+
 #include <queue>
 #include <stdio.h>
 #include <math.h>
@@ -20,46 +27,87 @@ void detectAndDisplay( cv::Mat frame );
 
 /** Global variables */
 //-- Note, either copy these two files from opencv/data/haarscascades to your current folder, or change these locations
-cv::String face_cascade_name = "../../../res/haarcascade_frontalface_alt.xml";
+cv::String face_cascade_name = "haarcascade_frontalface_alt.xml";
 cv::CascadeClassifier face_cascade;
 std::string main_window_name = "Capture - Face detection";
 std::string face_window_name = "Capture - Face";
 cv::RNG rng(12345);
 cv::Mat debugImage;
 cv::Mat skinCrCbHist = cv::Mat::zeros(cv::Size(256, 256), CV_8UC1);
+std::clock_t start;
+bool undected = false;
+
+/**
+ * COUNTER
+ */
+int countright = 0;
+int previousRightPupil;
+int countleft = 0;
+int previousLeftPupil;
+int counteye = 0;
+/**
+ */
 
 /**
  * @function main
  */
 int main( int argc, const char** argv ) {
-  CvCapture* capture;
+
+  /**
+   * EDITING
+   * CvCapture* capture;
+   */
+  cv::VideoCapture capture(-1);
+  /**
+   */
+
   cv::Mat frame;
 
   // Load the cascades
-  if( !face_cascade.load( face_cascade_name ) ){ printf("--(!)Error loading face cascade, please change face_cascade_name in source code.\n"); return -1; };
+  if( !face_cascade.load( face_cascade_name ) ){ 
+    printf("--(!)Error loading face cascade, please change face_cascade_name in source code.\n"); 
+    return -1; 
+  };
 
   cv::namedWindow(main_window_name,CV_WINDOW_NORMAL);
   cv::moveWindow(main_window_name, 400, 100);
   cv::namedWindow(face_window_name,CV_WINDOW_NORMAL);
-  cv::moveWindow(face_window_name, 10, 100);
-  cv::namedWindow("Right Eye",CV_WINDOW_NORMAL);
-  cv::moveWindow("Right Eye", 10, 600);
-  cv::namedWindow("Left Eye",CV_WINDOW_NORMAL);
-  cv::moveWindow("Left Eye", 10, 800);
-  cv::namedWindow("aa",CV_WINDOW_NORMAL);
-  cv::moveWindow("aa", 10, 800);
-  cv::namedWindow("aaa",CV_WINDOW_NORMAL);
-  cv::moveWindow("aaa", 10, 800);
+  cv::moveWindow(face_window_name, 100, 100);
+
+  /**
+   * HIDING OTHER WINDOWS
+   *
+   * cv::namedWindow("Right Eye",CV_WINDOW_NORMAL);
+   * cv::moveWindow("Right Eye", 10, 600);
+   * cv::namedWindow("Left Eye",CV_WINDOW_NORMAL);
+   * cv::moveWindow("Left Eye", 10, 800);
+   * cv::namedWindow("aa", CV_WINDOW_NORMAL);
+   * cv::moveWindow("aa", 10, 800);
+   * cv::namedWindow("aaa", CV_WINDOW_NORMAL);
+   * cv::moveWindow("aaa", 10, 800);
+   */
 
   createCornerKernels();
   ellipse(skinCrCbHist, cv::Point(113, 155.6), cv::Size(23.4, 15.2),
           43.0, 0.0, 360.0, cv::Scalar(255, 255, 255), -1);
 
-   // Read the video stream
-  capture = cvCaptureFromCAM( -1 );
-  if( capture ) {
+  // Read the video stream
+  /**
+   * EDITING
+   * capture = cvCaptureFromCAM( -1 );
+   * if( capture ) {
+   */
+  if (capture.isOpened()) {
+  /**
+   */ 
+
     while( true ) {
-      frame = cvQueryFrame( capture );
+      /**
+       * EDITING
+       * frame = cvQueryFrame( capture );
+       */
+      capture.read(frame);
+      /**/
       // mirror it
       cv::flip(frame, frame, 1);
       frame.copyTo(debugImage);
@@ -107,7 +155,9 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
                           eye_region_top,eye_region_width,eye_region_height);
 
   //-- Find Eye Centers
+  //printf("Left\n");
   cv::Point leftPupil = findEyeCenter(faceROI,leftEyeRegion,"Left Eye");
+  //printf("Right\n");
   cv::Point rightPupil = findEyeCenter(faceROI,rightEyeRegion,"Right Eye");
   // get corner regions
   cv::Rect leftRightCornerRegion(leftEyeRegion);
@@ -128,15 +178,40 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
   rightRightCornerRegion.x += rightPupil.x;
   rightRightCornerRegion.height /= 2;
   rightRightCornerRegion.y += rightRightCornerRegion.height / 2;
-  rectangle(debugFace,leftRightCornerRegion,200);
-  rectangle(debugFace,leftLeftCornerRegion,200);
-  rectangle(debugFace,rightLeftCornerRegion,200);
-  rectangle(debugFace,rightRightCornerRegion,200);
+  //rectangle(debugFace,leftRightCornerRegion,200);
+  //rectangle(debugFace,leftLeftCornerRegion,200);
+  //rectangle(debugFace,rightLeftCornerRegion,200);
+  //rectangle(debugFace,rightRightCornerRegion,200);
   // change eye centers to face coordinates
   rightPupil.x += rightEyeRegion.x;
   rightPupil.y += rightEyeRegion.y;
   leftPupil.x += leftEyeRegion.x;
   leftPupil.y += leftEyeRegion.y;
+
+  //-- Detect if eyes are closed 
+  if (abs(rightPupil.y - previousRightPupil) > 20 ) {
+    countright++;
+  }
+  else {
+    countright = 0;
+  } 
+  if (abs(leftPupil.y - previousLeftPupil) > 20 ) {
+    countleft++;
+  }
+  else {
+    countleft = 0;
+  }
+  if ( (countright > 0) && (countleft > 0) ) {
+    printf("Closed eyes \n");
+    counteye++;
+    printf("%d\n",counteye);
+  }
+
+  previousRightPupil = rightPupil.y;
+  previousLeftPupil = leftPupil.y;
+
+  //printf("Rx=%d Ry=%d Lx=%d Ly=%d\n", rightPupil.x , rightPupil.y, leftPupil.x, leftPupil.y);
+  
   // draw eye centers
   circle(debugFace, rightPupil, 3, 1234);
   circle(debugFace, leftPupil, 3, 1234);
@@ -205,8 +280,27 @@ void detectAndDisplay( cv::Mat frame ) {
   //cv::pow(frame_gray, CV_64F, frame_gray);
   //-- Detect faces
   face_cascade.detectMultiScale( frame_gray, faces, 1.1, 2, 0|CV_HAAR_SCALE_IMAGE|CV_HAAR_FIND_BIGGEST_OBJECT, cv::Size(150, 150) );
-//  findSkin(debugImage);
+  //findSkin(debugImage);
 
+  //-- No face detected for too long
+  if (faces.size() == 0)
+  {
+    if (undected){
+      if( (std::clock() - start) / CLOCKS_PER_SEC > kDeadline ){
+        /** SIGNAL **/
+        std::cout << "No face detected for " << (std::clock() - start) / CLOCKS_PER_SEC << " seconds\n";
+      }
+    }
+    else{
+      start = std::clock();
+      undected = true;
+    }
+  }
+  else{
+    undected = false;
+  }
+
+  //-- Draw faces
   for( int i = 0; i < faces.size(); i++ )
   {
     rectangle(debugImage, faces[i], 1234);
