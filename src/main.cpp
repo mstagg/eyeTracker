@@ -40,11 +40,10 @@ bool undected = false;
 /**
  * COUNTER
  */
-int countright = 0;
-int previousRightPupil;
-int countleft = 0;
-int previousLeftPupil;
-int counteye = 0;
+int closedright = 0;
+int closedleft = 0;
+int openright = 0;
+int openleft = 0;
 /**
  */
 
@@ -189,28 +188,31 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
   leftPupil.y += leftEyeRegion.y;
 
   //-- Detect if eyes are closed 
-  if (abs(rightPupil.y - previousRightPupil) > 20 ) {
-    countright++;
+  if (abs(rightPupil.y - rightEyeRegion.y) < 10 ) {
+    closedright++;
+    openright = 0;
   }
-  else {
-    countright = 0;
-  } 
-  if (abs(leftPupil.y - previousLeftPupil) > 20 ) {
-    countleft++;
+  else{
+    openright++;
   }
-  else {
-    countleft = 0;
+  if (abs(leftPupil.y - leftEyeRegion.y) < 10 ) {
+    closedleft++;
+    openleft = 0;
   }
-  if ( (countright > 0) && (countleft > 0) ) {
+  else{
+    openleft++;
+  }
+  if ( (openleft > 10) && (openright >10) ) {
+    closedright = 0;
+    closedleft = 0;
+  }
+  if ( (closedright > 3) || (closedleft > 3) ) {
+    /** SIGNAL **/
     printf("Closed eyes \n");
-    counteye++;
-    printf("%d\n",counteye);
   }
 
-  previousRightPupil = rightPupil.y;
-  previousLeftPupil = leftPupil.y;
-
-  //printf("Rx=%d Ry=%d Lx=%d Ly=%d\n", rightPupil.x , rightPupil.y, leftPupil.x, leftPupil.y);
+  //printf("openleft= %d, openright= %d, closedleft= %d, closedright= %d\n", openleft, openright, closedleft, closedright);
+  //printf("Ry=%d Ly=%d\n", rightPupil.y - rightEyeRegion.y, leftPupil.y - leftEyeRegion.y);
   
   // draw eye centers
   circle(debugFace, rightPupil, 3, 1234);
