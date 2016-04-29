@@ -15,7 +15,7 @@ const bool kSmoothFaceImage = false;
 const float kSmoothFaceFactor = 0.005;
 
 // Algorithm Parameters
-const int kFastEyeWidth = 50;
+const int kFastEyeWidth = 35;//50;
 const int kWeightBlurSize = 5;
 const bool kEnableWeight = true;
 const float kWeightDivisor = 1.0;
@@ -28,7 +28,10 @@ const float kPostProcessThreshold = 0.97;
 // Eye Corner
 const bool kEnableEyeCorner = false;
 
-// Deadline
-const std::clock_t kDeadline = 2;
+// Deadline & Cap
+const int kDeadline = 1;
+const int kCapDistWithBorder = 10;
+const int kCapClosedEyes = 3;
+const int kCapEyesDetected = 10;
 
 #endif

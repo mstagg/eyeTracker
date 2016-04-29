@@ -3,12 +3,11 @@
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <iostream>
-/**
- * TIMER
- */
+
+/** TIMER **/
+#include "time.h"
 #include <ctime>
-/**
- */
+/***/
 
 #include <queue>
 #include <stdio.h>
@@ -27,7 +26,7 @@ void detectAndDisplay( cv::Mat frame );
 
 /** Global variables */
 //-- Note, either copy these two files from opencv/data/haarscascades to your current folder, or change these locations
-cv::String face_cascade_name = "haarcascade_frontalface_alt.xml";
+cv::String face_cascade_name = "/home/pi/Desktop/eyeLike/res/haarcascade_frontalface_alt.xml";
 cv::CascadeClassifier face_cascade;
 std::string main_window_name = "Capture - Face detection";
 std::string face_window_name = "Capture - Face";
@@ -68,10 +67,10 @@ int main( int argc, const char** argv ) {
     return -1; 
   };
 
-  cv::namedWindow(main_window_name,CV_WINDOW_NORMAL);
-  cv::moveWindow(main_window_name, 400, 100);
-  cv::namedWindow(face_window_name,CV_WINDOW_NORMAL);
-  cv::moveWindow(face_window_name, 100, 100);
+  //cv::namedWindow(main_window_name,CV_WINDOW_NORMAL);
+  //cv::moveWindow(main_window_name, 400, 100);
+  //cv::namedWindow(face_window_name,CV_WINDOW_NORMAL);
+  //cv::moveWindow(face_window_name, 100, 100);
 
   /**
    * HIDING OTHER WINDOWS
@@ -98,7 +97,7 @@ int main( int argc, const char** argv ) {
    */
   if (capture.isOpened()) {
   /**
-   */ 
+   */
 
     while( true ) {
       /**
@@ -120,7 +119,7 @@ int main( int argc, const char** argv ) {
         break;
       }
 
-      imshow(main_window_name,debugImage);
+      //imshow(main_window_name,debugImage);
 
       int c = cv::waitKey(10);
       if( (char)c == 'c' ) { break; }
@@ -144,6 +143,7 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
     double sigma = kSmoothFaceFactor * face.width;
     GaussianBlur( faceROI, faceROI, cv::Size( 0, 0 ), sigma);
   }
+
   //-- Find eye regions and draw them
   int eye_region_width = face.width * (kEyePercentWidth/100.0);
   int eye_region_height = face.width * (kEyePercentHeight/100.0);
@@ -158,6 +158,8 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
   cv::Point leftPupil = findEyeCenter(faceROI,leftEyeRegion,"Left Eye");
   //printf("Right\n");
   cv::Point rightPupil = findEyeCenter(faceROI,rightEyeRegion,"Right Eye");
+
+/*
   // get corner regions
   cv::Rect leftRightCornerRegion(leftEyeRegion);
   leftRightCornerRegion.width -= leftPupil.x;
@@ -177,6 +179,9 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
   rightRightCornerRegion.x += rightPupil.x;
   rightRightCornerRegion.height /= 2;
   rightRightCornerRegion.y += rightRightCornerRegion.height / 2;
+
+*/
+
   //rectangle(debugFace,leftRightCornerRegion,200);
   //rectangle(debugFace,leftLeftCornerRegion,200);
   //rectangle(debugFace,rightLeftCornerRegion,200);
@@ -188,36 +193,42 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
   leftPupil.y += leftEyeRegion.y;
 
   //-- Detect if eyes are closed 
-  if (abs(rightPupil.y - rightEyeRegion.y) < 10 ) {
+  if (abs(rightPupil.y - rightEyeRegion.y) < kCapDistWithBorder ) {
     closedright++;
     openright = 0;
   }
   else{
     openright++;
   }
-  if (abs(leftPupil.y - leftEyeRegion.y) < 10 ) {
+  if (abs(leftPupil.y - leftEyeRegion.y) < kCapDistWithBorder ) {
     closedleft++;
     openleft = 0;
   }
   else{
     openleft++;
   }
-  if ( (openleft > 10) && (openright >10) ) {
+  if ( (openleft > kCapEyesDetected) && (openright > kCapEyesDetected) ) {
     closedright = 0;
     closedleft = 0;
   }
-  if ( (closedright > 3) || (closedleft > 3) ) {
-    /** SIGNAL **/
+  if ( (closedright > kCapClosedEyes) || (closedleft > kCapClosedEyes) ) {
+    // SIGNAL
+    system("omxplayer /home/pi/Desktop/alarm.mp3");
+    //closedright = 0;
+    //closedleft = 0;
     printf("Closed eyes \n");
   }
 
   //printf("openleft= %d, openright= %d, closedleft= %d, closedright= %d\n", openleft, openright, closedleft, closedright);
   //printf("Ry=%d Ly=%d\n", rightPupil.y - rightEyeRegion.y, leftPupil.y - leftEyeRegion.y);
-  
+
+  printf("X: Left eye= %d,Right eye= %d\n", leftPupil.x, rightPupil.x);
+
   // draw eye centers
   circle(debugFace, rightPupil, 3, 1234);
   circle(debugFace, leftPupil, 3, 1234);
 
+/*
   //-- Find Eye Corners
   if (kEnableEyeCorner) {
     cv::Point2f leftRightCorner = findEyeCorner(faceROI(leftRightCornerRegion), true, false);
@@ -238,7 +249,9 @@ void findEyes(cv::Mat frame_gray, cv::Rect face) {
     circle(faceROI, rightRightCorner, 3, 200);
   }
 
-  imshow(face_window_name, faceROI);
+*/
+
+  //imshow(face_window_name, faceROI);
 //  cv::Rect roi( cv::Point( 0, 0 ), faceROI.size());
 //  cv::Mat destinationROI = debugImage( roi );
 //  faceROI.copyTo( destinationROI );
@@ -281,7 +294,7 @@ void detectAndDisplay( cv::Mat frame ) {
   //equalizeHist( frame_gray, frame_gray );
   //cv::pow(frame_gray, CV_64F, frame_gray);
   //-- Detect faces
-  face_cascade.detectMultiScale( frame_gray, faces, 1.1, 2, 0|CV_HAAR_SCALE_IMAGE|CV_HAAR_FIND_BIGGEST_OBJECT, cv::Size(150, 150) );
+  face_cascade.detectMultiScale( frame_gray, faces, 1.1, 2, 0|CV_HAAR_SCALE_IMAGE|CV_HAAR_FIND_BIGGEST_OBJECT, cv::Size(150,150) );
   //findSkin(debugImage);
 
   //-- No face detected for too long
@@ -290,12 +303,15 @@ void detectAndDisplay( cv::Mat frame ) {
     if (undected){
       if( (std::clock() - start) / CLOCKS_PER_SEC > kDeadline ){
         /** SIGNAL **/
-        std::cout << "No face detected for " << (std::clock() - start) / CLOCKS_PER_SEC << " seconds\n";
+	system("hciconfig hci0 leadv 3");
+	system("hcitool -i hci0 cmd 0x08 0x0008 10 02 01 1a 0c ff 01 11 11 11 11 11 11 11 11 11 11");
       }
     }
     else{
       start = std::clock();
       undected = true;
+	system("hciconfig hci0 leadv 3");
+	system("hcitool -i hci0 cmd 0x08 0x0008 10 02 01 1a 0c ff 01 77 77 77 77 77 77 77 77 77 77");
     }
   }
   else{

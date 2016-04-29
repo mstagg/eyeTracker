@@ -174,6 +174,7 @@ cv::Point findEyeCenter(cv::Mat face, cv::Rect eye, std::string debugWindow) {
       testPossibleCentersFormula(x, y, weight, gX, gY, outSum);
     }
   }
+
   // scale all the values down, basically averaging them
   double numGradients = (weight.rows*weight.cols);
   cv::Mat out;
