@@ -1,3 +1,11 @@
+##TO RUN
+use the following commands to run the software after using `sudo apt-get update` and `sudo apt-get upgrade` to update your computer
+- Enable camera with "sudo modprobe bcm2835-v4l2" in command line.
+- From the folder "build", run "make".
+- From the folder "USI_eyetracker", run with "./build/bin/eyeLike".
+
+
+
 ##eyeLike
 An OpenCV based webcam gaze tracker based on a simple image gradient-based eye center algorithm by Fabian Timm.
 
